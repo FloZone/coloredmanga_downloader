@@ -1,15 +1,13 @@
 from argparse import ArgumentParser, ArgumentTypeError
 import os
-import re
 import sys
 
 from bs4 import BeautifulSoup
 import requests
 
-SCRIPT_VERSION = 1.00
+SCRIPT_VERSION = 1.01
 SCRIPT_NAME = "ColoredMangaDownloader"
 SCRIPT_FULLNAME = f"{SCRIPT_NAME} {SCRIPT_VERSION}"
-
 WEBSITE = "https://coloredmanga.com"
 DESCRIPTION = f"{SCRIPT_FULLNAME} - Browse the {WEBSITE} website and download mangas."
 
@@ -23,6 +21,7 @@ def parse_args():
         type=str,
         help="The URL of the first chapter of the manga you want to download",
     )
+    parser.add_argument("--all", action="store_true", help="Download all chapters from the given one until the end")
     args = parser.parse_args()
     # Validate args
     if WEBSITE not in args.chapter_url:
@@ -37,11 +36,13 @@ def log(message: str):
 
 
 def browse_chapter(chapter_url: str):
-    """Browse the chapter page and download the pages."""
+    """
+    Browse the chapter page and download the pages.
+    Return the next chapter URL if it exists, else None.
+    """
     log(f"Exploring {chapter_url}")
 
-    chapter_page = requests.get(chapter_url)
-    chapter_data = BeautifulSoup(chapter_page.content, "html.parser")
+    chapter_data = BeautifulSoup(requests.get(chapter_url).content, "html.parser")
 
     # [-1] because the first chapter is always selected
     volume_title = (
@@ -53,35 +54,44 @@ def browse_chapter(chapter_url: str):
         .find("option", selected=True)
         .text.strip()
     )
-    volume_number = "{0:0=3d}".format(int(re.findall(r"\d+", volume_title)[0]))
-    chapter_number = "{0:0=3d}".format(int(re.findall(r"\d+", chapter_title)[0]))
+    volume_name = chapter_url.rstrip("/").split("/")[-2]
+    chapter_name = chapter_url.rstrip("/").split("/")[-1]
     log(f"Chapter found: {volume_title} -- {chapter_title}")
 
     # Create a directory for the current volume if needed
-    volume_dir = f"volume_{volume_number}"
-    if not os.path.exists(volume_dir):
-        os.makedirs(volume_dir)
+    if not os.path.exists(volume_name):
+        os.makedirs(volume_name)
 
     # Download each page file into this dir
     pages = chapter_data.find("div", class_="reading-content").find_all("img", class_="wp-manga-chapter-img")
     page_count = 1
     page_total = len(pages)
     for page in pages:
-        log(f"Downloading page {page_count}/{page_total} ")
+        log(f"Downloading page {page_count}/{page_total}")
         page_url = page["src"].strip()
         pagename = "{0:0=3d}".format(page_count)
-        filename = f"{chapter_number}-{pagename}.{page_url.split('.')[-1]}"
-        with open(os.path.join(volume_dir, filename), "wb") as f:
+        filename = f"{chapter_name}-{pagename}.{page_url.split('.')[-1]}"
+        with open(os.path.join(volume_name, filename), "wb") as f:
             f.write(requests.get(page_url).content)
         page_count += 1
 
-    log(f"Chapter downloaded to directory {volume_dir} ✔️")
+    log(f"Chapter downloaded to directory {volume_name} ✔️\n")
+
+    next_chapter = chapter_data.find("a", class_="btn next_page")
+    if next_chapter:
+        return next_chapter["href"].strip()
+    else:
+        return None
 
 
 if __name__ == "__main__":
     args = parse_args()
 
-    browse_chapter(args.chapter_url)
+    next_chapter_url = browse_chapter(args.chapter_url)
+    # Download all remaining chapters
+    if args.all:
+        while next_chapter_url:
+            next_chapter_url = browse_chapter(next_chapter_url)
 
-    input("Execution completed 🎉. Press 'Enter' to exit...")
+    # input("🎉 Execution completed 🎉 Press 'Enter' to exit...")
     sys.exit(0)

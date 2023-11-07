@@ -13,7 +13,7 @@ pip install -r ./requirements.txt
 
 ## Command-line help
 ```
-usage: python coloredmanga_downloader.py [-h] [-v] chapter_url
+usage: python coloredmanga_downloader.py [-h] [-v] [--all] chapter_url
 
 ColoredMangaDownloader 1.0 - Browse the https://coloredmanga.com website and download mangas.
 
@@ -23,6 +23,7 @@ positional arguments:
 options:
   -h, --help     show this help message and exit
   -v, --version  show program's version number and exit
+  --all          Download all chapters from the given one until the end
 ```
 
 ## Other commands
