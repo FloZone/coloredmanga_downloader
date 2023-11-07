@@ -1,15 +1,18 @@
 from argparse import ArgumentParser, ArgumentTypeError
 import os
 import sys
+import zipfile
 
 from bs4 import BeautifulSoup
 import requests
 
-SCRIPT_VERSION = 1.01
+SCRIPT_VERSION = 1.2
 SCRIPT_NAME = "ColoredMangaDownloader"
 SCRIPT_FULLNAME = f"{SCRIPT_NAME} {SCRIPT_VERSION}"
 WEBSITE = "https://coloredmanga.com"
 DESCRIPTION = f"{SCRIPT_FULLNAME} - Browse the {WEBSITE} website and download mangas."
+
+DIRECTORIES = []
 
 
 def parse_args():
@@ -22,6 +25,7 @@ def parse_args():
         help="The URL of the first chapter of the manga you want to download",
     )
     parser.add_argument("--all", action="store_true", help="Download all chapters from the given one until the end")
+    parser.add_argument("--cbz", action="store_true", help="Compress downloaded volumes to CBZ files")
     args = parser.parse_args()
     # Validate args
     if WEBSITE not in args.chapter_url:
@@ -40,6 +44,8 @@ def browse_chapter(chapter_url: str):
     Browse the chapter page and download the pages.
     Return the next chapter URL if it exists, else None.
     """
+    global DIRECTORIES
+
     log(f"Exploring {chapter_url}")
 
     chapter_data = BeautifulSoup(requests.get(chapter_url).content, "html.parser")
@@ -61,6 +67,7 @@ def browse_chapter(chapter_url: str):
     # Create a directory for the current volume if needed
     if not os.path.exists(volume_name):
         os.makedirs(volume_name)
+        DIRECTORIES.append(volume_name)
 
     # Download each page file into this dir
     pages = chapter_data.find("div", class_="reading-content").find_all("img", class_="wp-manga-chapter-img")
@@ -93,5 +100,14 @@ if __name__ == "__main__":
         while next_chapter_url:
             next_chapter_url = browse_chapter(next_chapter_url)
 
-    # input("🎉 Execution completed 🎉 Press 'Enter' to exit...")
+    # CBZ compress downloaded volumes
+    if args.cbz:
+        for volume_dir in DIRECTORIES:
+            cbz_file = zipfile.ZipFile(f"{volume_dir}.cbz", "w")
+            for _, __, files in os.walk(volume_dir):
+                for filename in files:
+                    cbz_file.write(os.path.join(volume_dir, filename), filename)
+            cbz_file.close()
+
+    input("🎉 Execution completed 🎉 Press 'Enter' to exit...")
     sys.exit(0)
