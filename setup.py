@@ -5,6 +5,7 @@ import subprocess
 
 from setuptools import find_packages, setup
 
+from coloredmanga_downloader import DESCRIPTION, SCRIPT_NAME, SCRIPT_VERSION
 INPUT_FILE = "coloredmanga_downloader.py"
 
 
@@ -64,10 +65,10 @@ class FormatCommand(distutils.cmd.Command):
 
 
 setup(
-    name="",
-    version="",
+    name=SCRIPT_NAME,
+    version=SCRIPT_VERSION,
     author="FloZone",
-    description="",
+    description=DESCRIPTION,
     long_description=read("README.md"),
     packages=find_packages(),
     cmdclass={
