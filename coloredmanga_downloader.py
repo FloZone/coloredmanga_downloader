@@ -1,5 +1,6 @@
 from argparse import ArgumentParser, ArgumentTypeError
 import os
+import shutil
 import sys
 import zipfile
 
@@ -26,6 +27,9 @@ def parse_args():
     )
     parser.add_argument("--all", action="store_true", help="Download all chapters from the given one until the end")
     parser.add_argument("--cbz", action="store_true", help="Compress downloaded volumes to CBZ files")
+    parser.add_argument(
+        "--clean", action="store_true", help="Delete downloaded files after script execution (use with --cbz option)"
+    )
     args = parser.parse_args()
     # Validate args
     if WEBSITE not in args.chapter_url:
@@ -108,6 +112,10 @@ if __name__ == "__main__":
                 for filename in files:
                     cbz_file.write(os.path.join(volume_dir, filename), filename)
             cbz_file.close()
+        # Clean downloaded files
+        if args.clean:
+            for volume_dir in DIRECTORIES:
+                shutil.rmtree(volume_dir)
 
     input("🎉 Execution completed 🎉 Press 'Enter' to exit...")
     sys.exit(0)
