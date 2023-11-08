@@ -114,14 +114,14 @@ if __name__ == "__main__":
                 for filename in files:
                     cbz_file.write(os.path.join(volume_dir, filename), filename)
             cbz_file.close()
-        log(f"Volumes compressed ✔️\n")
+        log("Volumes compressed ✔️\n")
 
         # Clean downloaded files
         if args.clean:
             for volume_dir in DIRECTORIES:
                 log(f"Cleaning downloaded files from {volume_dir}")
                 shutil.rmtree(volume_dir)
-        log(f"Downloaded files cleaned ✔️\n")
+        log("Downloaded files cleaned ✔️\n")
 
     input("🎉 Execution completed 🎉 Press 'Enter' to exit...")
     sys.exit(0)
