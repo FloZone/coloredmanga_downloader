@@ -7,7 +7,7 @@ import zipfile
 from bs4 import BeautifulSoup
 import requests
 
-SCRIPT_VERSION = 1.2
+SCRIPT_VERSION = 1.3
 SCRIPT_NAME = "ColoredMangaDownloader"
 SCRIPT_FULLNAME = f"{SCRIPT_NAME} {SCRIPT_VERSION}"
 WEBSITE = "https://coloredmanga.com"
@@ -107,15 +107,21 @@ if __name__ == "__main__":
     # CBZ compress downloaded volumes
     if args.cbz:
         for volume_dir in DIRECTORIES:
-            cbz_file = zipfile.ZipFile(f"{volume_dir}.cbz", "w")
+            cbz_name = f"{volume_dir}.cbz"
+            log(f"Compressing volume {volume_dir} to {cbz_name}")
+            cbz_file = zipfile.ZipFile(cbz_name, "w")
             for _, __, files in os.walk(volume_dir):
                 for filename in files:
                     cbz_file.write(os.path.join(volume_dir, filename), filename)
             cbz_file.close()
+        log(f"Volumes compressed ✔️\n")
+
         # Clean downloaded files
         if args.clean:
             for volume_dir in DIRECTORIES:
+                log(f"Cleaning downloaded files from {volume_dir}")
                 shutil.rmtree(volume_dir)
+        log(f"Downloaded files cleaned ✔️\n")
 
     input("🎉 Execution completed 🎉 Press 'Enter' to exit...")
     sys.exit(0)
